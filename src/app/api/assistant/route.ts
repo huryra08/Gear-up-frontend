@@ -139,10 +139,10 @@ function createFallbackResponse(data: AssistantRequest): string {
     return "Use the Log in link to access your account. If you’re having trouble with account access, please contact the GearUp team at /contact. Never share your password or payment information in chat.";
   }
   if (/\b(return|damage|late|pickup|delivery|cancel|refund|support|help)\b/.test(latestMessage)) {
-    return "For help with a specific booking, pickup, return, cancellation, or equipment issue, contact the support team at /contact. You can also visit the Help / Support page at /help.";
+    return "For help with a specific booking, pickup, return, cancellation, or equipment issue, contact the support team at /contact.";
   }
 
-  return "I can help with browsing gear, rental steps, and finding support. Try asking how to book or pay for a rental, or visit /help for support topics. For a question about a specific listing or order, check its page or contact /contact.";
+  return "I can help with browsing gear, rental steps, and finding support. Try asking how to book or pay for a rental. For a question about a specific listing or order, check its page or contact /contact.";
 }
 
 type RateLimitBucket = { count: number; resetAt: number };

@@ -65,9 +65,6 @@ export default function ContactPage() {
 
           <div className="flex flex-wrap gap-3">
             <LinkButton href="mailto:support@gearup.example">Email support</LinkButton>
-            <LinkButton href="/help" variant="secondary">
-              Help center
-            </LinkButton>
           </div>
         </div>
 

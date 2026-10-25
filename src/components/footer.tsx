@@ -76,16 +76,6 @@ export function Footer() {
                 Blog
               </Link>
             </li>
-            <li>
-              <Link href="/help" className="hover:text-rust transition-colors">
-                Help / Support
-              </Link>
-            </li>
-            <li>
-              <Link href="/privacy" className="hover:text-rust transition-colors">
-                Privacy / Terms
-              </Link>
-            </li>
           </ul>
         </div>
         <div>
