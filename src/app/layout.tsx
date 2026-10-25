@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/toaster";
+import { SupportAssistant } from "@/components/support-assistant";
 
 export const metadata: Metadata = {
   title: "GearUp — Rent Sports & Outdoor Gear Instantly",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">{children}</main>
           <Footer />
           <Toaster />
+          <SupportAssistant />
         </AuthProvider>
       </body>
     </html>

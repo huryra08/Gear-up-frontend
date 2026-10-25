@@ -7,7 +7,13 @@ import type { Gear, Category } from "@/lib/types";
 import { GearCard } from "@/components/gear-card";
 import { GearCardSkeleton } from "@/components/gear-card-skeleton";
 import { Input, Select, Label } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { recordGearSearch, readGearDiscoveryProfile } from "@/lib/gear-discovery";
+import { Search, Sparkles } from "lucide-react";
+
+type SearchSuggestion =
+  | { type: "gear"; id: string; label: string; detail: string }
+  | { type: "category"; id: string; label: string; detail: string }
+  | { type: "recent"; label: string; detail: string };
 
 function GearBrowse() {
   const searchParams = useSearchParams();
@@ -19,6 +25,8 @@ function GearBrowse() {
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
     categoryApi.list().then(setCategories).catch(() => {});
@@ -31,6 +39,18 @@ function GearBrowse() {
       .catch(() => setError("Couldn't load gear. Check that the API server is running."));
   }, []);
 
+  useEffect(() => {
+    const query = searchTerm.trim();
+    if (query.length < 2) return;
+
+    const timeoutId = window.setTimeout(() => {
+      const profile = recordGearSearch(query);
+      setRecentSearches(profile.searches);
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchTerm]);
+
   const filtered = useMemo(() => {
     if (!gear) return [];
     return gear.filter((g) => {
@@ -40,7 +60,8 @@ function GearBrowse() {
         const hit =
           g.name.toLowerCase().includes(term) ||
           g.description.toLowerCase().includes(term) ||
-          (g.brand?.toLowerCase().includes(term) ?? false);
+          (g.brand?.toLowerCase().includes(term) ?? false) ||
+          (g.category?.name.toLowerCase().includes(term) ?? false);
         if (!hit) return false;
       }
       if (category && g.categoryId !== category) return false;
@@ -50,6 +71,66 @@ function GearBrowse() {
       return true;
     });
   }, [gear, searchTerm, category, minPrice, maxPrice]);
+
+  const suggestions = useMemo<SearchSuggestion[]>(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return [];
+
+    const pastSearches = recentSearches
+      .filter((search) => search.includes(query) && search !== query)
+      .slice(0, 2)
+      .map((search): SearchSuggestion => ({
+        type: "recent",
+        label: search,
+        detail: "Recent search",
+      }));
+    const matchingGear = (gear ?? [])
+      .filter((item) => {
+        const text = [item.name, item.brand, item.category?.name]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return item.status === "AVAILABLE" && text.includes(query);
+      })
+      .sort((a, b) => {
+        const aStarts = a.name.toLowerCase().startsWith(query) ? 1 : 0;
+        const bStarts = b.name.toLowerCase().startsWith(query) ? 1 : 0;
+        return bStarts - aStarts;
+      })
+      .slice(0, 4)
+      .map(
+        (item): SearchSuggestion => ({
+          type: "gear",
+          id: item.id,
+          label: item.name,
+          detail: [item.category?.name, item.brand].filter(Boolean).join(" · ") || "Available gear",
+        })
+      );
+    const matchingCategories = categories
+      .filter((item) => item.name.toLowerCase().includes(query))
+      .slice(0, 2)
+      .map(
+        (item): SearchSuggestion => ({
+          type: "category",
+          id: item.id,
+          label: item.name,
+          detail: "Category",
+        })
+      );
+
+    return [...pastSearches, ...matchingGear, ...matchingCategories].slice(0, 6);
+  }, [categories, gear, recentSearches, searchTerm]);
+
+  const applySuggestion = (suggestion: SearchSuggestion) => {
+    setShowSuggestions(false);
+    if (suggestion.type === "category") {
+      setCategory(suggestion.id);
+      setSearchTerm("");
+      return;
+    }
+
+    setSearchTerm(suggestion.label);
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
@@ -61,13 +142,70 @@ function GearBrowse() {
           <div>
             <Label>Search</Label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-soft" />
+              <Search aria-hidden="true" className="absolute left-2.5 top-3 h-4 w-4 text-ink-soft" />
               <Input
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={showSuggestions && suggestions.length > 0}
+                aria-controls="gear-search-suggestions"
+                autoComplete="off"
                 className="pl-8"
                 placeholder="Tent, bike, kayak…"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => {
+                  setRecentSearches(readGearDiscoveryProfile().searches);
+                  setShowSuggestions(true);
+                }}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setShowSuggestions(false);
+                  if (event.key === "Enter" && suggestions[0]) {
+                    event.preventDefault();
+                    applySuggestion(suggestions[0]);
+                    if (suggestions[0].type !== "category") {
+                      recordGearSearch(suggestions[0].label);
+                    }
+                  }
+                }}
               />
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  id="gear-search-suggestions"
+                  role="listbox"
+                  aria-label="Search suggestions"
+                  className="absolute z-20 mt-1 w-full border border-line bg-paper shadow-lg"
+                >
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={`${suggestion.type}-${suggestion.type === "recent" ? suggestion.label : suggestion.id}`}
+                      type="button"
+                      role="option"
+                      aria-selected="false"
+                      className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-canvas-raised"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        applySuggestion(suggestion);
+                        if (suggestion.type !== "category") {
+                          recordGearSearch(suggestion.label);
+                        }
+                      }}
+                    >
+                      {suggestion.type === "recent" ? (
+                        <Sparkles aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-moss" />
+                      ) : (
+                        <Search aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-ink-soft" />
+                      )}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-ink">{suggestion.label}</span>
+                        <span className="block text-xs text-ink-soft">{suggestion.detail}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div>

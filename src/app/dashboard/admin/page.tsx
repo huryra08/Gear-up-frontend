@@ -2,21 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { adminApi, categoryApi } from "@/lib/api";
-import type { DashboardStats } from "@/lib/types";
+import type { DashboardStats, Gear, RentalOrder } from "@/lib/types";
 import { LinkButton } from "@/components/ui/button";
 import { Users, Package, ClipboardList, Tags } from "lucide-react";
+import { analyzeAdminData } from "@/lib/admin-analytics";
+import { AdminInsights } from "@/components/admin-insights";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [categoryCount, setCategoryCount] = useState<number | null>(null);
-  const [categoryCountError, setCategoryCountError] = useState(false);
+  const [categoryCountError, setCategoryCountError] = useState<string | null>(null);
+  const [orders, setOrders] = useState<RentalOrder[] | null>(null);
+  const [gear, setGear] = useState<Gear[] | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   useEffect(() => {
     adminApi.stats().then(setStats).catch(() => setStats({}));
     categoryApi
       .list()
       .then((categories) => setCategoryCount(categories.length))
-      .catch(() => setCategoryCountError(true));
+      .catch(() => setCategoryCountError("Category totals are unavailable."));
+    Promise.all([adminApi.allRentals(), adminApi.allGear()])
+      .then(([rentalOrders, listedGear]) => {
+        setOrders(rentalOrders);
+        setGear(listedGear);
+      })
+      .catch(() => setAnalyticsError("Analytics data could not be loaded. Check admin API access and try refreshing."));
   }, []);
 
   const cards = [
@@ -50,6 +61,15 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {categoryCountError && <p role="alert" className="mb-4 text-sm text-rust-deep">{categoryCountError}</p>}
+      {analyticsError && <p role="alert" className="mb-6 border border-rust/40 bg-rust/5 p-4 text-sm text-rust-deep">{analyticsError}</p>}
+      {(!orders || !gear) && !analyticsError && (
+        <p className="mb-6 text-sm text-ink-soft">Loading rental and gear analytics…</p>
+      )}
+      {orders && gear && (
+        <AdminInsights analytics={analyzeAdminData(orders, gear)} />
+      )}
     </div>
   );
 }

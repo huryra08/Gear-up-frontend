@@ -6,6 +6,7 @@ import Image from "next/image";
 import { gearApi, rentalApi, ApiError } from "@/lib/api";
 import type { Gear } from "@/lib/types";
 import { formatMoney, formatDate, daysBetween } from "@/lib/utils";
+import { recordGearView } from "@/lib/gear-discovery";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -40,7 +41,10 @@ export default function GearDetailPage() {
     if (!id) return;
     gearApi
       .get(id)
-      .then(setGear)
+      .then((item) => {
+        setGear(item);
+        recordGearView(item);
+      })
       .catch(() => setError("Gear not found."));
   }, [id]);
 

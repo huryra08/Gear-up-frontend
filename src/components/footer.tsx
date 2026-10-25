@@ -54,7 +54,7 @@ export function Footer() {
           </p>
         </div>
         <div>
-          <p className="tag-label text-paper mb-3">Services</p>
+          <p className="tag-label text-paper mb-3">Explore</p>
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/gear" className="hover:text-rust transition-colors">
@@ -63,7 +63,27 @@ export function Footer() {
             </li>
             <li>
               <Link href="/about" className="hover:text-rust transition-colors">
-                About Us
+                About
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="hover:text-rust transition-colors">
+                Contact
+              </Link>
+            </li>
+            <li>
+              <Link href="/blog" className="hover:text-rust transition-colors">
+                Blog
+              </Link>
+            </li>
+            <li>
+              <Link href="/help" className="hover:text-rust transition-colors">
+                Help / Support
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="hover:text-rust transition-colors">
+                Privacy / Terms
               </Link>
             </li>
           </ul>

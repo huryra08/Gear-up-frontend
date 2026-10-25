@@ -6,6 +6,8 @@ import { gearApi, categoryApi } from "@/lib/api";
 import type { Gear, Category } from "@/lib/types";
 import { GearCard } from "@/components/gear-card";
 import { GearCardSkeleton } from "@/components/gear-card-skeleton";
+import { GearDiscovery } from "@/components/gear-discovery";
+import { DigestRecommendations } from "@/components/digest-recommendations";
 import { LinkButton } from "@/components/ui/button";
 import { ArrowRight, Tent, Bike, Snowflake, Waves } from "lucide-react";
 
@@ -100,6 +102,9 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      {gear && <GearDiscovery gear={gear} />}
+      {gear && <DigestRecommendations gear={gear} />}
     </div>
   );
 }
