@@ -76,6 +76,16 @@ export function Footer() {
                 Blog
               </Link>
             </li>
+            <li>
+              <Link href="/support" className="hover:text-rust transition-colors">
+                Support
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="hover:text-rust transition-colors">
+                Terms
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
