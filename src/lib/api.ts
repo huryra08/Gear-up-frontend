@@ -111,6 +111,12 @@ export const authApi = {
       body: payload,
       auth: false,
     }),
+  loginWithGoogle: (idToken: string) =>
+    request<{ accessToken: string; refreshToken: string; user: User }>("/auth/google", {
+      method: "POST",
+      body: { idToken },
+      auth: false,
+    }),
   me: () => request<User>("/auth/me"),
   updateProfile: (payload: { name?: string; phone?: string; bio?: string; address?: string; profilePhoto?: string }) =>
     request<User>("/users/me/profile", { method: "PATCH", body: payload }),

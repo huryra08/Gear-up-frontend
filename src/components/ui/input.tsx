@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
-import { InputHTMLAttributes, TextareaHTMLAttributes, SelectHTMLAttributes } from "react";
+import {
+  InputHTMLAttributes,
+  LabelHTMLAttributes,
+  TextareaHTMLAttributes,
+  SelectHTMLAttributes,
+} from "react";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -39,9 +44,9 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
   );
 }
 
-export function Label({ children, className }: { children: React.ReactNode; className?: string }) {
+export function Label({ children, className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
-    <label className={cn("tag-label block mb-1.5 text-ink-soft", className)}>
+    <label className={cn("tag-label block mb-1.5 text-ink-soft", className)} {...props}>
       {children}
     </label>
   );

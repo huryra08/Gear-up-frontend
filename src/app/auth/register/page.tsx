@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { Input, Label, FieldError } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 
@@ -73,7 +74,7 @@ export default function RegisterPage() {
 
         <div>
           <Label>Password</Label>
-          <Input type="password" {...register("password")} placeholder="At least 6 characters" />
+          <PasswordInput {...register("password")} placeholder="At least 6 characters" />
           <FieldError>{errors.password?.message}</FieldError>
         </div>
 

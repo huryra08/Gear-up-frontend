@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { adminApi, ApiError } from "@/lib/api";
+import { adminApi, authApi, ApiError } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Input, Select } from "@/components/ui/input";
+import { Input, Label, Select } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -17,6 +18,12 @@ export default function AdminUsersPage() {
   const [role, setRole] = useState("");
   const [page, setPage] = useState(1);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [showProviderForm, setShowProviderForm] = useState(false);
+  const [creatingProvider, setCreatingProvider] = useState(false);
+  const [providerName, setProviderName] = useState("");
+  const [providerEmail, setProviderEmail] = useState("");
+  const [providerPassword, setProviderPassword] = useState("");
+  const [providerPhone, setProviderPhone] = useState("");
 
   const load = () => {
     adminApi
@@ -45,13 +52,106 @@ export default function AdminUsersPage() {
     }
   };
 
+  const createProvider = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCreatingProvider(true);
+    try {
+      await authApi.register({
+        name: providerName.trim(),
+        email: providerEmail.trim(),
+        password: providerPassword,
+        phone: providerPhone.trim(),
+        role: "PROVIDER",
+      });
+      toast.success("Provider account created.");
+      setProviderName("");
+      setProviderEmail("");
+      setProviderPassword("");
+      setProviderPhone("");
+      setShowProviderForm(false);
+      setSearchTerm("");
+      setRole("PROVIDER");
+      setPage(1);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Couldn't create the provider account.");
+    } finally {
+      setCreatingProvider(false);
+    }
+  };
+
   const totalPages = users ? Math.max(1, Math.ceil(users.length / PAGE_SIZE)) : 1;
   const pageUsers = users?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? [];
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
       <p className="tag-label text-rust mb-2">Admin dashboard</p>
-      <h1 className="font-display text-3xl text-forest mb-8">User Management</h1>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-display text-3xl text-forest">User Management</h1>
+        <Button type="button" onClick={() => setShowProviderForm((visible) => !visible)}>
+          <Plus aria-hidden="true" className="h-4 w-4" />
+          {showProviderForm ? "Cancel" : "Create Provider"}
+        </Button>
+      </div>
+
+      {showProviderForm && (
+        <form
+          onSubmit={createProvider}
+          className="mb-8 grid grid-cols-1 gap-4 border border-line bg-paper p-6 sm:grid-cols-2"
+        >
+          <div>
+            <Label htmlFor="provider-name">Provider name</Label>
+            <Input
+              id="provider-name"
+              value={providerName}
+              onChange={(event) => setProviderName(event.target.value)}
+              placeholder="Trailhead Gear Co"
+              autoComplete="organization"
+              required
+              minLength={2}
+            />
+          </div>
+          <div>
+            <Label htmlFor="provider-email">Email</Label>
+            <Input
+              id="provider-email"
+              type="email"
+              value={providerEmail}
+              onChange={(event) => setProviderEmail(event.target.value)}
+              placeholder="provider@example.com"
+              autoComplete="email"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="provider-password">Temporary password</Label>
+            <PasswordInput
+              id="provider-password"
+              value={providerPassword}
+              onChange={(event) => setProviderPassword(event.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={6}
+            />
+          </div>
+          <div>
+            <Label htmlFor="provider-phone">Phone</Label>
+            <Input
+              id="provider-phone"
+              type="tel"
+              value={providerPhone}
+              onChange={(event) => setProviderPhone(event.target.value)}
+              placeholder="+8801800000000"
+              autoComplete="tel"
+              required
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={creatingProvider}>
+              {creatingProvider ? "Creating…" : "Create Provider"}
+            </Button>
+          </div>
+        </form>
+      )}
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
